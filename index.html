@@ -35,9 +35,7 @@
       overflow-x: hidden;
     }
     /* Canvas background */
-    #space {
-      position: fixed; inset: 0; z-index: -1; display: block; filter: saturate(120%) contrast(105%);
-    }
+    #space { position: fixed; inset: 0; z-index: -1; display: block; filter: saturate(120%) contrast(105%); }
 
     /* Global elements */
     a { color: rgb(var(--ring)); text-decoration: none; }
@@ -58,12 +56,8 @@
     #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent2)), rgb(var(--accent3))); z-index: 50; box-shadow: 0 0 18px rgba(168,85,247,.6); }
 
     /* Navbar */
-    .nav {
-      position: sticky; top: 12px; z-index: 40; margin-top: 12px;
-    }
-    .nav-inner {
-      display: flex; align-items: center; justify-content: space-between; padding: .65rem .9rem; gap: .75rem;
-    }
+    .nav { position: sticky; top: 12px; z-index: 40; margin-top: 12px; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: .65rem .9rem; gap: .75rem; }
     .nav .brand { font-weight: 800; letter-spacing: .5px; font-size: 1rem; display:flex; align-items:center; gap:.6rem }
     .orb { width: 26px; height: 26px; border-radius: 999px;
       background: conic-gradient(from 210deg, rgb(var(--accent)), rgb(var(--accent2)), rgb(var(--accent3)), rgb(var(--accent)));
@@ -139,6 +133,12 @@
     /* Utility */
     .row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
     .right { text-align: right; }
+
+    /* NEW: Lightbox */
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;place-items:center;z-index:70}
+    .lightbox.open{display:grid}
+    .lightbox img{max-width:92vw;max-height:92vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    .lightbox .close{position:absolute;top:14px;right:18px;font-size:28px;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:.25rem .55rem;background:rgba(255,255,255,.06);cursor:pointer}
   </style>
 </head>
 <body>
@@ -155,7 +155,7 @@
         <a href="#projects">Projects</a>
         <a href="#publications">Publications</a>
         <a href="#skills">Skills</a>
-        <a href="#gallery">Gallery</a><!-- new tab -->
+        <a href="#gallery">Gallery</a>
         <a href="#contact">Contact</a>
       </nav>
       <div class="row"><span class="kbd" title="Open command palette">Ctrl/⌘ + K</span></div>
@@ -329,7 +329,7 @@
     <!-- NEW: Gallery -->
     <section id="gallery">
       <h2 class="section-title">Gallery</h2>
-      <div id="galleryGrid" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));"></div>
+      <div id="galleryGrid" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));"></div>
     </section>
 
     <section id="contact">
@@ -370,6 +370,12 @@
   </div>
 
   <a id="toTop" class="btn glass" href="#top" aria-label="Back to top">↑ Top</a>
+
+  <!-- NEW: Lightbox -->
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <button class="close" aria-label="Close">✕</button>
+    <img id="lightImg" alt="Full size photo">
+  </div>
 
   <script>
     // ===== Canvas space background (constellations) =====
@@ -474,8 +480,8 @@
     palInput.addEventListener('input', e=> renderList(e.target.value));
     pal.addEventListener('click', e=>{ if(e.target===pal) closePal(); });
 
-    // ===== Gallery (shuffled, no filenames shown) =====
-    // Put your images in: assets/photos/ and keep/rename as you like.
+    // ===== Gallery (shuffled, larger tiles) =====
+    // Put your images in: assets/photos/
     const gallerySources = [
       'assets/photos/1.jpg',
       'assets/photos/2.jpg',
@@ -496,7 +502,7 @@
         fig.innerHTML = `
           <div class="shine"></div>
           <img src="${src}" alt="Photo" loading="lazy"
-               style="width:100%;height:280px;object-fit:cover;border-radius:12px" />
+               style="width:100%;height:380px;object-fit:cover;border-radius:12px;cursor:zoom-in" />
         `;
         grid.appendChild(fig);
       });
@@ -504,6 +510,21 @@
       document.querySelectorAll('#galleryGrid .reveal').forEach(el=> io.observe(el));
     }
     renderGallery();
+
+    // ===== Lightbox open/close =====
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightImg');
+    const lbClose = lb.querySelector('.close');
+    function openLB(src){ lbImg.src = src; lb.classList.add('open'); lb.setAttribute('aria-hidden','false'); }
+    function closeLB(){ lb.classList.remove('open'); lb.setAttribute('aria-hidden','true'); lbImg.removeAttribute('src'); }
+    document.getElementById('galleryGrid').addEventListener('click', e=>{
+      const img = e.target.closest('img');
+      if(!img) return;
+      openLB(img.src);
+    });
+    lb.addEventListener('click', e=>{ if(e.target===lb) closeLB(); });
+    lbClose.addEventListener('click', closeLB);
+    addEventListener('keydown', e=>{ if(e.key==='Escape') closeLB(); });
 
     // ===== Year =====
     document.getElementById('year').textContent = new Date().getFullYear();
